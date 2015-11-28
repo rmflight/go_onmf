@@ -128,6 +128,7 @@ biocLite(c("GO.db", "graph", "org.Hs.eg.db"))
 ```r
 library(readr)
 library(dplyr)
+library(GO.db)
 library(org.Hs.eg.db)
 ```
 
@@ -154,9 +155,6 @@ prop_indices <- prop_indices[!is.na(prop_indices)]
 
 
 ```r
-library(readr)
-library(dplyr)
-library(org.Hs.eg.db)
 go_map <- read_csv("ONMF_source/brca/go_(merged).csv", col_names = c("loc", "GO"))
 gene_map <- read_csv("ONMF_source/brca/gene_(merged).csv", col_names = c("loc", "GENE"))
 ```
@@ -183,6 +181,25 @@ gene_id <- dplyr::filter(gene_map, loc %in% 783) %>% dplyr::select(GENE) %>%
 ```
 
 The gene name is CYP1B1.
+
+Now, are the terms in `org_go` parents of the terms in `prop_go`? We will simply
+make a number of calls to `GO*PARENTS` and save the results.
+
+
+```r
+query_list <- prop_go
+n_iteration <- 10
+org_frac <- numeric(n_iteration + 1)
+org_frac[1] <- sum(org_go %in% query_list) / length(org_go)
+for (i_iter in seq(1, n_iteration)) {
+  tmp_parents <- mget(query_list, GOBPPARENTS, ifnotfound = NA) %>%
+    unlist(., use.names = FALSE) %>% unique() 
+  query_list <- unique(c(tmp_parents, query_list))
+  query_list <- query_list[!is.na(query_list)]
+  org_frac[i_iter + 1] <- sum(org_go %in% query_list) / length(org_go)
+}
+```
+
 
 With this gene id, we can lookup the GO annotations for the gene stored in
 `org.Hs.eg.db`.
