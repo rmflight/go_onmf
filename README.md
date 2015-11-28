@@ -193,6 +193,31 @@ sum(org_go %in% prop_ancestors)
 ## [1] 8
 ```
 
+Hmmm, there are 8 of the originals in the
+propagated. This seems not right. Maybe they are children instead?
+
+
+```r
+org_ancestors <- mget(org_go, GOBPANCESTOR, ifnotfound = NA) %>%
+  unlist(., use.names = FALSE) %>% unique()
+
+sum(prop_go %in% org_ancestors)
+```
+
+```
+## [1] 3
+```
+
+OK, this doesn't look right either. 
+
+## Check GO Relationships
+
+There is a file that has the distances between GO terms, encoded as:
+
+* GO term 1 | distance | GO term 2
+
+For adjacent terms, it appears that the distance is 0.5. So lets extract all
+of them, and compare them to the data in `GO.db`.
 
 With this gene id, we can lookup the GO annotations for the gene stored in
 `org.Hs.eg.db`.
