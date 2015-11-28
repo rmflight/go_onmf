@@ -1,5 +1,5 @@
 %% Orthogonal non-negative matrix factorization/Gene-Ontology-based stratification
-library_path = '[]/ONMF_octave';
+library_path = '/home/rmflight/Projects/personal/onmf/ONMF_octave';
 addpath(genpath(library_path))
 
 %% Convert somatic mutation cancer data to my data
