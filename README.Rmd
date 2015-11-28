@@ -112,3 +112,9 @@ end
 prop_notzero = find(gene2go(783, :));
 save -ascii prop_notzero prop_notzero;
 ```
+
+## Compare Original and Propagated
+
+Now that we have the original and propagated indices in a format that we should
+be able to read, we can compare them and check how things are being propagated,
+whether to more or less specific terms.
