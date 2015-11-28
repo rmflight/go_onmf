@@ -113,6 +113,17 @@ prop_notzero = find(gene2go(783, :));
 save -ascii prop_notzero prop_notzero;
 ```
 
+## Prerequisites
+
+To continue this analysis, you will need some other `R` packages installed.
+
+```{r setup, eval=FALSE}
+install.packages(c("readr", "dplyr"))
+library(BiocInstaller)
+biocLite(c("GO.db", "graph", "org.Hs.eg.db"))
+```
+
+
 ## Compare Original and Propagated
 
 Now that we have the original and propagated indices in a format that we should
