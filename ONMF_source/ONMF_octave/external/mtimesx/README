@@ -1,0 +1,3 @@
+
+mex('CFLAGS=-std=c99 -fPIC','COMPFLAGS=-fopenmp','-DDEFINEUNIX','-largeArrayDims','-lmwblas','mtimesx.c');
+
