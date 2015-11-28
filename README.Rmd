@@ -183,12 +183,19 @@ go_5 <- dplyr::filter(go2go, distance == 0.5)
 ```
 
 ```{r find_them}
-go1 <- go_map[match(go_5$GO1, go_map$loc), "GO"]
-go2 <- go_map[match(go_5$GO2, go_map$loc), "GO"]
-
-onmf_parent_child <- data.frame(parent = go1, child = go2, stringsAsFactors = FALSE)
+go1 <- unlist(go_map[match(go_5$GO1, go_map$loc), "GO"], use.names = FALSE)
+go2 <- unlist(go_map[match(go_5$GO2, go_map$loc), "GO"], use.names = FALSE)
 ```
 
+```{r split_them}
+onmf_parent_child <- split(go2, go1)
+```
+
+Now get the ones from `GO.db`.
+
+```{r go_relationships}
+go_child <- mget(names(onmf_parent_child), GOBPCHILDREN, ifnotfound = NA)
+```
 
 
 ## Check the GO Annotations
