@@ -125,6 +125,13 @@ biocLite(c("GO.db", "graph", "org.Hs.eg.db"))
 ```
 
 
+```r
+library(readr)
+library(dplyr)
+library(org.Hs.eg.db)
+```
+
+
 ## Compare Original and Propagated
 
 Now that we have the original and propagated indices in a format that we should
@@ -149,6 +156,7 @@ prop_indices <- prop_indices[!is.na(prop_indices)]
 ```r
 library(readr)
 library(dplyr)
+library(org.Hs.eg.db)
 go_map <- read_csv("ONMF_source/brca/go_(merged).csv", col_names = c("loc", "GO"))
 gene_map <- read_csv("ONMF_source/brca/gene_(merged).csv", col_names = c("loc", "GENE"))
 ```
@@ -159,9 +167,9 @@ First we need to actually get out the GO id's.
 
 
 ```r
-org_go <- filter(go_map, loc %in% org_indices) %>% select(GO) %>% 
+org_go <- dplyr::filter(go_map, loc %in% org_indices) %>% dplyr::select(GO) %>% 
   unlist(., use.names = FALSE) %>% unique()
-prop_go <- filter(go_map, loc %in% prop_indices) %>% select(GO) %>% 
+prop_go <- dplyr::filter(go_map, loc %in% prop_indices) %>% dplyr::select(GO) %>% 
   unlist(., use.names = FALSE) %>% unique()
 ```
 
@@ -170,7 +178,35 @@ the index of **783**.
 
 
 ```r
-gene_id <- filter(gene_map, loc %in% 783) %>% select(GENE) %>% 
+gene_id <- dplyr::filter(gene_map, loc %in% 783) %>% dplyr::select(GENE) %>% 
   unlist(., use.names = FALSE)
 ```
+
+The gene name is CYP1B1.
+
+With this gene id, we can lookup the GO annotations for the gene stored in
+`org.Hs.eg.db`.
+
+
+```r
+gene_go <- AnnotationDbi::select(org.Hs.eg.db, keys = gene_id, columns = "GO",
+                                 keytype = "SYMBOL")
+```
+
+```
+## 'select()' returned 1:many mapping between keys and columns
+```
+
+```r
+gene_allgo <- AnnotationDbi::select(org.Hs.eg.db, keys = gene_id, columns = "GOALL",
+                                    keytype = "SYMBOL")
+```
+
+```
+## 'select()' returned 1:many mapping between keys and columns
+```
+
+And lookup how many of the ONMF GO terms are in these two lists.
+
+
 
