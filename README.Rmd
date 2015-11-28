@@ -168,3 +168,4 @@ the index of **783**.
 gene_id <- filter(gene_map, loc %in% 783) %>% select(GENE) %>% 
   unlist(., use.names = FALSE)
 ```
+

@@ -113,6 +113,18 @@ prop_notzero = find(gene2go(783, :));
 save -ascii prop_notzero prop_notzero;
 ```
 
+## Prerequisites
+
+To continue this analysis, you will need some other `R` packages installed.
+
+
+```r
+install.packages(c("readr", "dplyr"))
+library(BiocInstaller)
+biocLite(c("GO.db", "graph", "org.Hs.eg.db"))
+```
+
+
 ## Compare Original and Propagated
 
 Now that we have the original and propagated indices in a format that we should
@@ -129,5 +141,36 @@ org_indices <- org_indices[!is.na(org_indices)]
 prop_indices <- scan(file = "ONMF_source/brca/prop_notzero", what = numeric(),
                      sep = " ")
 prop_indices <- prop_indices[!is.na(prop_indices)]
+```
+
+### Read Other Data Files
+
+
+```r
+library(readr)
+library(dplyr)
+go_map <- read_csv("ONMF_source/brca/go_(merged).csv", col_names = c("loc", "GO"))
+gene_map <- read_csv("ONMF_source/brca/gene_(merged).csv", col_names = c("loc", "GENE"))
+```
+
+### Actually Compare
+
+First we need to actually get out the GO id's.
+
+
+```r
+org_go <- filter(go_map, loc %in% org_indices) %>% select(GO) %>% 
+  unlist(., use.names = FALSE) %>% unique()
+prop_go <- filter(go_map, loc %in% prop_indices) %>% select(GO) %>% 
+  unlist(., use.names = FALSE) %>% unique()
+```
+
+And then what gene are we supposedly working with? I randomly chose the one with
+the index of **783**.
+
+
+```r
+gene_id <- filter(gene_map, loc %in% 783) %>% select(GENE) %>% 
+  unlist(., use.names = FALSE)
 ```
 
