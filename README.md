@@ -65,51 +65,27 @@ As this runs, it generates *gene2go.mat*, which is the propogated scores of gene
 to GO associations.
 
 We will use `Octave` to generate some indices and print them to files that can be
-double checked in `R`.
+double checked in `R` (see ONMF_source/brca/exp_onmf_brca.m)
+
 
 ```
-# from run_onmf_brca.m
+%% Orthogonal non-negative matrix factorization/Gene-Ontology-based stratification
+library_path = '/home/rmflight/Projects/personal/onmf/ONMF_source/ONMF_octave';
+addpath(genpath(library_path))
+%% Convert somatic mutation cancer data to my data
+patient2gene = load('network_patient2gene(merged).csv');
 gene2go = load('network_gene2go(merged).csv');
 go2go = load('network_allgo2allgo(merged).csv');
 patient2gene = getSparse(patient2gene);
 gene2go = getSparse(gene2go);
 go2go = getSparse(go2go);
-
 patient2gene(find(patient2gene)) = 1;
 gene2go(find(gene2go)) = 1;
-
-# my own to save the data out
 org_notzero = find(gene2go(783, :));
 save -ascii org_notzero org_notzero;
-
-# from ONMF_octave/TuneData.m
-[go_col] = size(gene2go, 2);
-[go_row] = size(go2go, 1);
-
-if (go_row ~= go_col)
-    min_gonum = min(go_col, go_row);
-    go2go = go2go(1:min_gonum, 1:min_gonum);
-    gene2go = gene2go(:, 1:min_gonum);
-end
-
-[gene_col] = size(patient2gene, 2);
-[gene_row] = size(gene2go, 1);
-if (gene_col ~= gene_row)
-    min_genenum = min(gene_row, gene_col);
-    patient2gene = patient2gene(:, 1:min_genenum);
-    gene2go = gene2go(1:min_genenum, :);
-end
-
-baseSMData.gene_indiv_mat = patient2gene;
-if ~exist('gene2go.mat')
-    gene2go = networkPropagateWithTof(gene2go, go2go, 1.0, 100);
-    save('gene2go.mat', 'gene2go');
-else
-    load('gene2go.mat');
-end
-
-# save out the indices
-prop_notzero = find(gene2go(783, :));
+[baseSMData, patient2gene, gene2go_new, go2go_new] = TuneData(patient2gene, gene2go, go2go);
+isequal(go2go_new, go2go)
+prop_notzero = find(gene2go_new(783, :));
 save -ascii prop_notzero prop_notzero;
 ```
 
