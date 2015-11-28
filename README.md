@@ -183,21 +183,38 @@ gene_id <- dplyr::filter(gene_map, loc %in% 783) %>% dplyr::select(GENE) %>%
 The gene name is CYP1B1.
 
 Now, are the terms in `org_go` parents of the terms in `prop_go`? We will simply
-make a number of calls to `GO*PARENTS` and save the results.
+make a calls to `GOBPANCESTORS` and save the results.
 
 
 ```r
-query_list <- prop_go
-n_iteration <- 10
-org_frac <- numeric(n_iteration + 1)
-org_frac[1] <- sum(org_go %in% query_list) / length(org_go)
-for (i_iter in seq(1, n_iteration)) {
-  tmp_parents <- mget(query_list, GOBPPARENTS, ifnotfound = NA) %>%
-    unlist(., use.names = FALSE) %>% unique() 
-  query_list <- unique(c(tmp_parents, query_list))
-  query_list <- query_list[!is.na(query_list)]
-  org_frac[i_iter + 1] <- sum(org_go %in% query_list) / length(org_go)
-}
+# first check that everything is BP
+org_terms <- GOTERM[org_go]
+unique(Ontology(org_terms))
+```
+
+```
+## [1] "BP"
+```
+
+```r
+prop_terms <- GOTERM[prop_go]
+unique(Ontology(prop_terms))
+```
+
+```
+## [1] "BP"
+```
+
+```r
+# get ancestors
+prop_ancestors <- mget(prop_go, GOBPANCESTOR, ifnotfound = NA) %>% 
+  unlist(., use.names = FALSE) %>% unique()
+
+sum(org_go %in% prop_ancestors)
+```
+
+```
+## [1] 8
 ```
 
 
