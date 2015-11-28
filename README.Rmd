@@ -118,3 +118,15 @@ save -ascii prop_notzero prop_notzero;
 Now that we have the original and propagated indices in a format that we should
 be able to read, we can compare them and check how things are being propagated,
 whether to more or less specific terms.
+
+### Read Indices
+
+```{r read_indices}
+org_indices <- scan(file = "ONMF_source/brca/org_notzero", what = numeric(), 
+                    sep = " ")
+org_indices <- org_indices[!is.na(org_indices)]
+prop_indices <- scan(file = "ONMF_source/brca/prop_notzero", what = numeric(),
+                     sep = " ")
+prop_indices <- prop_indices[!is.na(prop_indices)]
+```
+
