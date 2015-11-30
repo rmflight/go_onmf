@@ -1,3 +1,10 @@
+---
+title: "RMF Investigation of GO-ONMF"
+author: "Robert M Flight <rflight79@gmail.com>"
+date: "2015-11-30 09:43:29"
+output: md_document
+---
+
 # GO ONMF
 
 ## Introduction

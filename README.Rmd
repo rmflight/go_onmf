@@ -1,3 +1,10 @@
+---
+title: "RMF Investigation of GO-ONMF"
+author: "Robert M Flight <rflight79@gmail.com>"
+date: "`r Sys.time()`"
+output: md_document
+---
+
 # GO ONMF
 
 ## Introduction
