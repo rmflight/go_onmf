@@ -186,19 +186,14 @@ of them, and compare them to the data in `GO.db`.
 go2go <- read_csv("ONMF_source/brca/network_allgo2allgo(merged).csv",
                   col_names = c("GO1", "distance", "GO2"))
 
-go_5 <- dplyr::filter(go2go, distance == 0.5)
+go_notself <- dplyr::filter(go2go, distance != 1)
+go_notself$ID1 <- unlist(go_map[match(go_notself$GO1, go_map$loc), "GO"], use.names = FALSE)
+go_notself$ID2 <- unlist(go_map[match(go_notself$GO2, go_map$loc), "GO"], use.names = FALSE)
 ```
 
-```{r find_them}
-go1 <- unlist(go_map[match(go_5$GO1, go_map$loc), "GO"], use.names = FALSE)
-go2 <- unlist(go_map[match(go_5$GO2, go_map$loc), "GO"], use.names = FALSE)
+```{r split_parent_child}
+onmf_parent_child <- split(go_notself$ID2, go_notself$ID1)
 ```
-
-```{r split_them}
-onmf_parent_child <- split(go2, go1)
-```
-
-Now get the ones from `GO.db`.
 
 ```{r go_relationships}
 go_child <- mget(names(onmf_parent_child), GOBPCHILDREN, ifnotfound = NA)
@@ -219,20 +214,8 @@ perc_overlap <- vapply(names(onmf_parent_child), function(x){
 hist(perc_overlap)
 ```
 
-OK, so we are equally split between having all the same children, and having most
-of them. 
-
-Lets check how this works out if we split the other way on everything, and then
-get all the ancestors.
-
-```{r onmf_all_relationships}
-go1 <- unlist(go_map[match(go2go$GO1, go_map$loc), "GO"], use.names = FALSE)
-go2 <- unlist(go_map[match(go2go$GO2, go_map$loc), "GO"], use.names = FALSE)
-onmf_child_parent <- split(go1, go2)
-
-go_ancestors <- mget(names(onmf_child_parent), GOBPANCESTOR, ifnotfound = NA)
-```
-
+Some differences, but doesn't seem completely unexpected given that the data I'm
+using is newer than the data they used.
 
 ## Check the GO Annotations
 

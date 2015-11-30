@@ -1,7 +1,7 @@
 ---
 title: "RMF Investigation of GO-ONMF"
 author: "Robert M Flight <rflight79@gmail.com>"
-date: "2015-11-30 09:43:29"
+date: "2015-11-30 11:19:18"
 output: md_document
 ---
 
@@ -231,27 +231,42 @@ of them, and compare them to the data in `GO.db`.
 go2go <- read_csv("ONMF_source/brca/network_allgo2allgo(merged).csv",
                   col_names = c("GO1", "distance", "GO2"))
 
-go_5 <- dplyr::filter(go2go, distance == 0.5)
+go_notself <- dplyr::filter(go2go, distance != 1)
+go_notself$ID1 <- unlist(go_map[match(go_notself$GO1, go_map$loc), "GO"], use.names = FALSE)
+go_notself$ID2 <- unlist(go_map[match(go_notself$GO2, go_map$loc), "GO"], use.names = FALSE)
 ```
 
 
 ```r
-go1 <- unlist(go_map[match(go_5$GO1, go_map$loc), "GO"], use.names = FALSE)
-go2 <- unlist(go_map[match(go_5$GO2, go_map$loc), "GO"], use.names = FALSE)
+onmf_parent_child <- split(go_notself$ID2, go_notself$ID1)
 ```
-
-
-```r
-onmf_parent_child <- split(go2, go1)
-```
-
-Now get the ones from `GO.db`.
 
 
 ```r
 go_child <- mget(names(onmf_parent_child), GOBPCHILDREN, ifnotfound = NA)
 ```
 
+And calculate the % overlap of the `go_child` to `onmf_parent_child`.
+
+
+```r
+perc_overlap <- vapply(names(onmf_parent_child), function(x){
+  onmf_data <- unique(onmf_parent_child[[x]])
+  go_data <- unique(go_child[[x]])
+  
+  sum(go_data %in% onmf_data) / length(go_data)
+}, numeric(1))
+```
+
+
+```r
+hist(perc_overlap)
+```
+
+![plot of chunk plot_perc](figure/plot_perc-1.png) 
+
+Some differences, but doesn't seem completely unexpected given that the data I'm
+using is newer than the data they used.
 
 ## Check the GO Annotations
 
