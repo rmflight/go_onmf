@@ -1,7 +1,7 @@
 ---
 title: "RMF Investigation of GO-ONMF"
 author: "Robert M Flight <rflight79@gmail.com>"
-date: "2015-11-30 11:19:18"
+date: "2015-11-30 15:51:30"
 output: md_document
 ---
 
@@ -115,8 +115,106 @@ library(GO.db)
 library(org.Hs.eg.db)
 ```
 
+## Check Actual Input Data
 
-## Compare Original and Propagated
+Lets check that the actual data being used as input looks right.
+
+
+```r
+go_map <- read_csv("ONMF_source/brca/go_(merged).csv", col_names = c("loc", "GO"))
+gene_map <- read_csv("ONMF_source/brca/gene_(merged).csv", col_names = c("loc", "GENE"))
+gene2go <- read_csv("ONMF_source/brca/network_gene2go(merged).csv",
+                    col_names = c("gene", "score", "GO"))
+go2go <- read_csv("ONMF_source/brca/network_allgo2allgo(merged).csv",
+                  col_names = c("GO1", "distance", "GO2"))
+```
+
+And translate to something we can actually use.
+
+
+```r
+gene2go$geneid <- unlist(gene_map[match(gene2go$gene, gene_map$loc), "GENE"],
+                         use.names = FALSE)
+gene2go$goid <- unlist(go_map[match(gene2go$GO, go_map$loc), "GO"],
+                       use.names = FALSE)
+```
+
+And then query `org.Hs.eg.db` for the annotations as well.
+
+
+```r
+hs_gene2go <- select(org.Hs.eg.db, keys = unique(gene2go$geneid),
+                     columns = c("GO", "ONTOLOGY"), keytype = "SYMBOL")
+```
+
+```
+## 'select()' returned 1:many mapping between keys and columns
+```
+
+```r
+hs_gene2go <- dplyr::filter(hs_gene2go, ONTOLOGY == "BP", EVIDENCE != "IEA")
+```
+
+And compare the annotations for the genes between them.
+
+
+```r
+annotation_overlap <- vapply(unique(hs_gene2go$SYMBOL), function(in_loc){
+  hs_data <- dplyr::filter(hs_gene2go, SYMBOL == in_loc) %>%
+    dplyr::select(., GO) %>% unlist()
+  onmf_data <- dplyr::filter(gene2go, geneid == in_loc) %>%
+    dplyr::select(., goid) %>% unlist()
+  sum(hs_data %in% onmf_data) / length(hs_data)
+}, numeric(1))
+```
+
+And check the distribution of overlap:
+
+
+```r
+hist(annotation_overlap)
+```
+
+![plot of chunk distribution_overlap](figure/distribution_overlap-1.png) 
+
+That is great, over 4000 of the genes have what appear to be very similar terms!
+
+Lets also check the **GO2GO** data.
+
+
+```r
+go_notself <- dplyr::filter(go2go, distance != 1)
+go_notself$ID1 <- unlist(go_map[match(go_notself$GO1, go_map$loc), "GO"], use.names = FALSE)
+go_notself$ID2 <- unlist(go_map[match(go_notself$GO2, go_map$loc), "GO"], use.names = FALSE)
+
+onmf_pc <- split(go_notself$ID2, go_notself$ID1)
+go_pc <- mget(names(onmf_pc), GOBPCHILDREN, ifnotfound = NA)
+
+go2go_overlap <- vapply(names(onmf_pc), function(in_loc){
+  go_data <- go_pc[[in_loc]]
+  onmf_data <- onmf_pc[[in_loc]]
+  sum(go_data %in% onmf_data) / length(go_data)
+}, numeric(1))
+```
+
+And plot it:
+
+
+```r
+hist(go2go_overlap)
+```
+
+![plot of chunk plot_go2go_comparison](figure/plot_go2go_comparison-1.png) 
+
+
+
+## Work With Single Gene
+
+Now lets work with a single gene, and see what is going on. We'll keep it simple
+and play with the first one in the list, *A2M*.
+
+
+
 
 Now that we have the original and propagated indices in a format that we should
 be able to read, we can compare them and check how things are being propagated,
@@ -134,13 +232,7 @@ prop_indices <- scan(file = "ONMF_source/brca/prop_notzero", what = numeric(),
 prop_indices <- prop_indices[!is.na(prop_indices)]
 ```
 
-### Read Other Data Files
 
-
-```r
-go_map <- read_csv("ONMF_source/brca/go_(merged).csv", col_names = c("loc", "GO"))
-gene_map <- read_csv("ONMF_source/brca/gene_(merged).csv", col_names = c("loc", "GENE"))
-```
 
 ### Actually Compare
 
@@ -230,20 +322,17 @@ of them, and compare them to the data in `GO.db`.
 ```r
 go2go <- read_csv("ONMF_source/brca/network_allgo2allgo(merged).csv",
                   col_names = c("GO1", "distance", "GO2"))
-
-go_notself <- dplyr::filter(go2go, distance != 1)
-go_notself$ID1 <- unlist(go_map[match(go_notself$GO1, go_map$loc), "GO"], use.names = FALSE)
-go_notself$ID2 <- unlist(go_map[match(go_notself$GO2, go_map$loc), "GO"], use.names = FALSE)
 ```
 
 
-```r
-onmf_parent_child <- split(go_notself$ID2, go_notself$ID1)
-```
 
 
 ```r
 go_child <- mget(names(onmf_parent_child), GOBPCHILDREN, ifnotfound = NA)
+```
+
+```
+## Error in mget(names(onmf_parent_child), GOBPCHILDREN, ifnotfound = NA): error in evaluating the argument 'x' in selecting a method for function 'mget': Error: object 'onmf_parent_child' not found
 ```
 
 And calculate the % overlap of the `go_child` to `onmf_parent_child`.
@@ -258,12 +347,18 @@ perc_overlap <- vapply(names(onmf_parent_child), function(x){
 }, numeric(1))
 ```
 
+```
+## Error in vapply(names(onmf_parent_child), function(x) {: object 'onmf_parent_child' not found
+```
+
 
 ```r
 hist(perc_overlap)
 ```
 
-![plot of chunk plot_perc](figure/plot_perc-1.png) 
+```
+## Error in hist(perc_overlap): object 'perc_overlap' not found
+```
 
 Some differences, but doesn't seem completely unexpected given that the data I'm
 using is newer than the data they used.
@@ -284,6 +379,7 @@ gene_go <- AnnotationDbi::select(org.Hs.eg.db, keys = gene_id, columns = "GO",
 ```
 
 ```r
+gene_go <- dplyr::filter(gene_go, ONTOLOGY == "BP", EVIDENCE != "IEA")
 gene_allgo <- AnnotationDbi::select(org.Hs.eg.db, keys = gene_id, columns = "GOALL",
                                     keytype = "SYMBOL")
 ```
@@ -292,7 +388,18 @@ gene_allgo <- AnnotationDbi::select(org.Hs.eg.db, keys = gene_id, columns = "GOA
 ## 'select()' returned 1:many mapping between keys and columns
 ```
 
+```r
+gene_allgo <- dplyr::filter(gene_allgo, ONTOLOGYALL == "BP", EVIDENCEALL != "IEA")
+```
+
 And lookup how many of the ONMF GO terms are in these two lists.
 
 
+```r
+sum(org_go %in% gene_go$GO) 
+```
+
+```
+## [1] 1
+```
 

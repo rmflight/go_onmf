@@ -97,8 +97,90 @@ library(GO.db)
 library(org.Hs.eg.db)
 ```
 
+## Check Actual Input Data
 
-## Compare Original and Propagated
+Lets check that the actual data being used as input looks right.
+
+```{r load_annotation}
+go_map <- read_csv("ONMF_source/brca/go_(merged).csv", col_names = c("loc", "GO"))
+gene_map <- read_csv("ONMF_source/brca/gene_(merged).csv", col_names = c("loc", "GENE"))
+gene2go <- read_csv("ONMF_source/brca/network_gene2go(merged).csv",
+                    col_names = c("gene", "score", "GO"))
+go2go <- read_csv("ONMF_source/brca/network_allgo2allgo(merged).csv",
+                  col_names = c("GO1", "distance", "GO2"))
+```
+
+And translate to something we can actually use.
+
+```{r translate_annotation}
+gene2go$geneid <- unlist(gene_map[match(gene2go$gene, gene_map$loc), "GENE"],
+                         use.names = FALSE)
+gene2go$goid <- unlist(go_map[match(gene2go$GO, go_map$loc), "GO"],
+                       use.names = FALSE)
+```
+
+And then query `org.Hs.eg.db` for the annotations as well.
+
+```{r gene_annotation_from_source}
+hs_gene2go <- select(org.Hs.eg.db, keys = unique(gene2go$geneid),
+                     columns = c("GO", "ONTOLOGY"), keytype = "SYMBOL")
+hs_gene2go <- dplyr::filter(hs_gene2go, ONTOLOGY == "BP", EVIDENCE != "IEA")
+```
+
+And compare the annotations for the genes between them.
+
+```{r compare_annotation_sources}
+annotation_overlap <- vapply(unique(hs_gene2go$SYMBOL), function(in_loc){
+  hs_data <- dplyr::filter(hs_gene2go, SYMBOL == in_loc) %>%
+    dplyr::select(., GO) %>% unlist()
+  onmf_data <- dplyr::filter(gene2go, geneid == in_loc) %>%
+    dplyr::select(., goid) %>% unlist()
+  sum(hs_data %in% onmf_data) / length(hs_data)
+}, numeric(1))
+```
+
+And check the distribution of overlap:
+
+```{r distribution_overlap}
+hist(annotation_overlap)
+```
+
+That is great, over 4000 of the genes have what appear to be very similar terms!
+
+Lets also check the **GO2GO** data.
+
+```{r check_go2go}
+go_notself <- dplyr::filter(go2go, distance != 1)
+go_notself$ID1 <- unlist(go_map[match(go_notself$GO1, go_map$loc), "GO"], use.names = FALSE)
+go_notself$ID2 <- unlist(go_map[match(go_notself$GO2, go_map$loc), "GO"], use.names = FALSE)
+
+onmf_pc <- split(go_notself$ID2, go_notself$ID1)
+go_pc <- mget(names(onmf_pc), GOBPCHILDREN, ifnotfound = NA)
+
+go2go_overlap <- vapply(names(onmf_pc), function(in_loc){
+  go_data <- go_pc[[in_loc]]
+  onmf_data <- onmf_pc[[in_loc]]
+  sum(go_data %in% onmf_data) / length(go_data)
+}, numeric(1))
+```
+
+And plot it:
+
+```{r plot_go2go_comparison}
+hist(go2go_overlap)
+```
+
+
+
+## Work With Single Gene
+
+Now lets work with a single gene, and see what is going on. We'll keep it simple
+and play with the first one in the list, *A2M*.
+
+```{r}
+
+```
+
 
 Now that we have the original and propagated indices in a format that we should
 be able to read, we can compare them and check how things are being propagated,
@@ -115,12 +197,7 @@ prop_indices <- scan(file = "ONMF_source/brca/prop_notzero", what = numeric(),
 prop_indices <- prop_indices[!is.na(prop_indices)]
 ```
 
-### Read Other Data Files
 
-```{r read_other}
-go_map <- read_csv("ONMF_source/brca/go_(merged).csv", col_names = c("loc", "GO"))
-gene_map <- read_csv("ONMF_source/brca/gene_(merged).csv", col_names = c("loc", "GENE"))
-```
 
 ### Actually Compare
 
@@ -186,13 +263,11 @@ of them, and compare them to the data in `GO.db`.
 go2go <- read_csv("ONMF_source/brca/network_allgo2allgo(merged).csv",
                   col_names = c("GO1", "distance", "GO2"))
 
-go_notself <- dplyr::filter(go2go, distance != 1)
-go_notself$ID1 <- unlist(go_map[match(go_notself$GO1, go_map$loc), "GO"], use.names = FALSE)
-go_notself$ID2 <- unlist(go_map[match(go_notself$GO2, go_map$loc), "GO"], use.names = FALSE)
+
 ```
 
 ```{r split_parent_child}
-onmf_parent_child <- split(go_notself$ID2, go_notself$ID1)
+
 ```
 
 ```{r go_relationships}
@@ -225,13 +300,15 @@ With this gene id, we can lookup the GO annotations for the gene stored in
 ```{r get_go}
 gene_go <- AnnotationDbi::select(org.Hs.eg.db, keys = gene_id, columns = "GO",
                                  keytype = "SYMBOL")
+gene_go <- dplyr::filter(gene_go, ONTOLOGY == "BP", EVIDENCE != "IEA")
 gene_allgo <- AnnotationDbi::select(org.Hs.eg.db, keys = gene_id, columns = "GOALL",
                                     keytype = "SYMBOL")
+gene_allgo <- dplyr::filter(gene_allgo, ONTOLOGYALL == "BP", EVIDENCEALL != "IEA")
 ```
 
 And lookup how many of the ONMF GO terms are in these two lists.
 
 ```{r compare_onmf_to_official}
-
+sum(org_go %in% gene_go$GO) 
 ```
 
