@@ -204,6 +204,35 @@ Now get the ones from `GO.db`.
 go_child <- mget(names(onmf_parent_child), GOBPCHILDREN, ifnotfound = NA)
 ```
 
+And calculate the % overlap of the `go_child` to `onmf_parent_child`.
+
+```{r perc_overlap_onmf_go}
+perc_overlap <- vapply(names(onmf_parent_child), function(x){
+  onmf_data <- unique(onmf_parent_child[[x]])
+  go_data <- unique(go_child[[x]])
+  
+  sum(go_data %in% onmf_data) / length(go_data)
+}, numeric(1))
+```
+
+```{r plot_perc}
+hist(perc_overlap)
+```
+
+OK, so we are equally split between having all the same children, and having most
+of them. 
+
+Lets check how this works out if we split the other way on everything, and then
+get all the ancestors.
+
+```{r onmf_all_relationships}
+go1 <- unlist(go_map[match(go2go$GO1, go_map$loc), "GO"], use.names = FALSE)
+go2 <- unlist(go_map[match(go2go$GO2, go_map$loc), "GO"], use.names = FALSE)
+onmf_child_parent <- split(go1, go2)
+
+go_ancestors <- mget(names(onmf_child_parent), GOBPANCESTOR, ifnotfound = NA)
+```
+
 
 ## Check the GO Annotations
 
