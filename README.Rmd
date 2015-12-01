@@ -208,7 +208,7 @@ hist(go2go_overlap)
 Now lets work with a single gene, and see what is going on. We'll keep it simple
 and play with the first one in the list, *A2M*.
 
-### Grab Starting and Propogated
+### Grab Starting and Propagated Terms
 
 ```{r a2m_data}
 onmf_a2m_start <- dplyr::filter(gene2go, geneid == "A2M") %>%
@@ -227,6 +227,8 @@ onmf_a2m_matrix_prop <- dplyr::filter(go_map, loc %in% onmf_a2m_indices_prop) %>
   dplyr::select(GO) %>% unlist(., use.names = FALSE) %>% sort()
 ```
 
+### Compare To Database
+
 Now, how many of the terms in the starting gene annotation actually in the database
 annotation?
 
@@ -237,6 +239,8 @@ sum(onmf_a2m_matrix_org %in% hs_a2m_go) / length(onmf_a2m_matrix_org)
 ```
 
 OK, seems we have most of them. Good.
+
+### Check if Propagated Are Children of Original
 
 Next, are the propagated terms actually children of the starting terms? We will
 use multiple iterations of calls to `GOBPCHILDREN` and see if we get progressively
@@ -263,10 +267,11 @@ for (i_iter in seq(1, n_iteration)) {
 plot(seq(0, n_iteration), children_overlap)
 ```
 
-**WE HAVE FOUND THEM**. The propagated terms have **NO** overlap with the original
-terms, and are children of the original terms. Just to be sure, we will also
-compare the propagated terms to the `GOALL` annotation, which would be all of
-the GO terms that can **technically** be considered as **annotated** to the gene
+**FOUND THEM**. The propagated terms have **NO** overlap with the original
+terms (see 0's at the start of the graph), and are children of the original terms. 
+Just to be sure, I will also compare the propagated terms to the `GOALL` annotation,
+which would be all of the GO terms that can **technically** be considered as
+**annotated** to the gene (see *true path rule* from the Introduction), 
 in that all **terms** and their **parent** terms are **annotated** to a gene product.
 
 ```{r get_all}
@@ -278,7 +283,7 @@ sum(hs_a2m_all$GOALL %in% onmf_a2m_matrix_prop) # propogated annotation
 ```
 
 From this, none of the **propogated** terms can be properly considered as 
-annotations to **A2M**. Effectively, the code has generated a new set of
+annotations to **A2M**. Effectively, the code has generated a **new set** of
 GO annotations to **A2M**. I am sure this is the situation for all of the
 genes.
 
