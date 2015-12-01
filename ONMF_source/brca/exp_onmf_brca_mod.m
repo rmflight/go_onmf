@@ -13,12 +13,12 @@ go2go = getSparse(go2go);
 patient2gene(find(patient2gene)) = 1;
 gene2go(find(gene2go)) = 1;
 
-org_notzero = find(gene2go(783, :));
+org_notzero = find(gene2go(1, :));
 save -ascii org_notzero org_notzero;
 
 [baseSMData, patient2gene, gene2go_new, go2go_new] = TuneData(patient2gene, gene2go, go2go);
 
 isequal(go2go_new, go2go)
 
-prop_notzero = find(gene2go_new(783, :));
+prop_notzero = find(gene2go_new(1, :));
 save -ascii prop_notzero prop_notzero;
