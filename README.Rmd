@@ -7,13 +7,19 @@ output: md_document
 
 # GO ONMF
 
+## Contact with Authors
+
+As of Dec 1, 2015, a copy of this report was sent to Hwanjo Yu as the corresponding
+author listed on the manuscript for feedback, either in email, or ideally as issues
+or pull requests on this `github` repo.
+
 ## Introduction
 
-Kim and Yu, A Mutation Profile for Top-k Patient Search Exploiting Gene-Ontology
-and Orthogonal Non-negative Matrix Factorization, Bioinformatics, 2015,
+Kim, Sael and Yu, "A Mutation Profile for Top-k Patient Search Exploiting Gene-Ontology
+and Orthogonal Non-negative Matrix Factorization", Bioinformatics, 2015,
 http://dx.doi.org/10.1093/bioinformatics/btv409
 
-Kim and Yu recently published the above paper in which they develop a method
+Kim, Sael and Yu recently published the above paper in which they develop a method
 for creating a mutation-gene-ontology profile. As part of the overall procedure, 
 they described (Section 2.3, *Gene Function Profile*):
 
@@ -30,9 +36,9 @@ is annotated to a *specific* term, then that gene product is also automatically
 annotated to all of the *less-specific* **parent** terms in the DAG. 
 
 What the procedure quoted above sounds like it is doing is essentially **adding**
-more specific GO annotations to a gene product, which as far as I know is not allowed.
+**more specific** GO annotations to a gene product, which as far as I know is not allowed.
 
-This document is a record of my investigation as to whether *more specific* GO
+This document is a record of my investigation as to whether **more specific** GO
 annotations are being added to gene products during the creation of the mutation 
 profiles.
 
@@ -40,6 +46,8 @@ profiles.
 
 Kim and Yu made an `Octave` version of their software available at https://sites.google.com/site/postechdm/research/implementation/orgos, and a
 tarball of the Octave version can be downloaded from https://sites.google.com/site/postechdm/research/implementation/orgos/ONMF_octave-simple.zip
+
+This code was used to fetch a copy of the software:
 
 ```
 wget https://sites.google.com/site/postechdm/research/implementation/orgos/ONMF_octave-simple.zip
@@ -52,27 +60,23 @@ are important for our purposes include:
 
 * ONMF_source/brca/go_(merged).csv - the index to GO term file
 * ONMF_source/brca/gene_(merged).csv - the index to gene file
-* exp_onmf_brca_mod.m - the file that runs the *brca* analysis
+* exp_onmf_brca.m - the file that runs the *brca* analysis
 * network_gene2go(merged).csv - the gene 2 GO annotations
 
 ## Running Code
 
-After modifying *exp_onmf_brca_mod.m* with:
-
-> library_path = '/home/rmflight/Projects/personal/onmf/ONMF_source/ONMF_octave';
-
-And in `Octave` I ran:
+After modifying *exp_onmf_brca.m* to have the correct library path, and then
+adding some code that will save **gene - GO** indices before and after the
+optimization step (see below for the actual code run), I `cd` to the `ONMF_source`
+directory, and then start `Octave`, and then run:
 
 ```
 cd brca
-run exp_onmf_brca.m
+run exp_onmf_brca_mod.m
 ```
 
 As this runs, it generates *gene2go.mat*, which is the propogated scores of gene
-to GO associations.
-
-I will use `Octave` to generate some indices and print them to files that can be
-double checked in `R` (see [file](ONMF_source/brca/exp_onmf_brca_mod.m))
+to GO associations, and then saves indices (see [file](ONMF_source/brca/exp_onmf_brca_mod.m)):
 
 ```{r print_octave_code, echo = FALSE, comment=''}
 # from run_onmf_brca.m
@@ -90,6 +94,8 @@ library(BiocInstaller)
 biocLite(c("GO.db", "graph", "org.Hs.eg.db"))
 ```
 
+## Load Packages
+
 ```{r load_packages, message=FALSE}
 library(readr)
 library(dplyr)
@@ -101,7 +107,10 @@ library(org.Hs.eg.db)
 
 Lets check that the actual data being used as input looks right. **Note** that 
 1 gets added to the map indices so that we easily work with the data from the
-matrices in `Octave`.
+matrices in `Octave`. The input data includes the `go_map`, that maps GO terms
+to indices, `gene_map` mapping gene symbols to indices, `gene2go` mapping the
+GO annotations to genes, and `go2go`, giving the parent-child relationships of
+the GO terms.
 
 ```{r load_annotation}
 go_map <- read_csv("ONMF_source/brca/go_(merged).csv", 
@@ -120,7 +129,8 @@ go2go$GO1 <- go2go$GO1 + 1
 go2go$GO2 <- go2go$GO2 + 1
 ```
 
-And translate to something we can actually use.
+And add the actual gene symbols and GO IDs to the `gene2go` to enable easy comparisons
+with any other data source we can find.
 
 ```{r translate_annotation}
 gene2go$geneid <- unlist(gene_map[match(gene2go$gene, gene_map$loc), "GENE"],
