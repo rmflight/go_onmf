@@ -1,7 +1,7 @@
 ---
 title: "RMF Investigation of GO-ONMF"
 author: "Robert M Flight <rflight79@gmail.com>"
-date: "2015-12-01 15:37:06"
+date: "2015-12-01 16:10:52"
 output: md_document
 ---
 
@@ -37,6 +37,14 @@ annotated to all of the *less-specific* **parent** terms in the DAG.
 
 What the procedure quoted above sounds like it is doing is essentially **adding**
 **more specific** GO annotations to a gene product, which as far as I know is not allowed.
+
+From [The Gene Ontology Consortium, 2001](http://www.ncbi.nlm.nih.gov/pmc/articles/PMC311077/):
+
+> The pathway from a child term to its top-level parent(s) must always be true.
+
+This is why when considering gene-GO annotations, we consider the specific term
+annotation, and **all** parent terms as well, because of the **true path** rule.
+However, the converse is not true.
 
 This document is a record of my investigation as to whether **more specific** GO
 annotations are being added to gene products during the creation of the mutation 
@@ -75,7 +83,7 @@ cd brca
 run exp_onmf_brca_mod.m
 ```
 
-As this runs, it generates *gene2go.mat*, which is the propogated scores of gene
+As this runs, it generates *gene2go.mat*, which is the propagated scores of gene
 to GO associations, and then saves indices (see [file](ONMF_source/brca/exp_onmf_brca_mod.m)):
 
 
@@ -159,7 +167,7 @@ gene2go$goid <- unlist(go_map[match(gene2go$GO, go_map$loc), "GO"],
                        use.names = FALSE)
 ```
 
-And then query `org.Hs.eg.db` for the annotations as well.
+And then query `org.Hs.eg.db` for the gene-annotations as well.
 
 
 ```r
@@ -175,7 +183,10 @@ hs_gene2go <- select(org.Hs.eg.db, keys = unique(gene2go$geneid),
 hs_gene2go <- dplyr::filter(hs_gene2go, ONTOLOGY == "BP", EVIDENCE != "IEA")
 ```
 
-And compare the annotations for the genes between them.
+### Compare Gene-GO Annotations
+
+And compare the annotations for the genes between the data from Kim and from
+the Bioconductor database.
 
 
 ```r
@@ -198,6 +209,8 @@ hist(annotation_overlap)
 ![plot of chunk distribution_overlap](figure/distribution_overlap-1.png) 
 
 That is great, over 4000 of the genes have what appear to be very similar terms!
+
+### Compare GO-GO Relationships
 
 Lets also check the **GO2GO** data.
 
@@ -231,6 +244,8 @@ hist(go2go_overlap)
 Now lets work with a single gene, and see what is going on. We'll keep it simple
 and play with the first one in the list, *A2M*.
 
+### Grab Starting and Propagated Terms
+
 
 ```r
 onmf_a2m_start <- dplyr::filter(gene2go, geneid == "A2M") %>%
@@ -249,6 +264,8 @@ onmf_a2m_matrix_prop <- dplyr::filter(go_map, loc %in% onmf_a2m_indices_prop) %>
   dplyr::select(GO) %>% unlist(., use.names = FALSE) %>% sort()
 ```
 
+### Compare To Database
+
 Now, how many of the terms in the starting gene annotation actually in the database
 annotation?
 
@@ -265,7 +282,9 @@ sum(onmf_a2m_matrix_org %in% hs_a2m_go) / length(onmf_a2m_matrix_org)
 
 OK, seems we have most of them. Good.
 
-Next, are the propogated terms actually children of the starting terms? We will
+### Check if Propagated Are Children of Original
+
+Next, are the propagated terms actually children of the starting terms? We will
 use multiple iterations of calls to `GOBPCHILDREN` and see if we get progressively
 more of the terms.
 
@@ -294,10 +313,11 @@ plot(seq(0, n_iteration), children_overlap)
 
 ![plot of chunk plot_it](figure/plot_it-1.png) 
 
-**WE HAVE FOUND THEM**. The propogated terms have **NO** overlap with the original
-terms, and are children of the original terms. Just to be sure, we will also
-compare the propogated terms to the `GOALL` annotation, which would be all of
-the GO terms that can **technically** be considered as **annotated** to the gene
+**FOUND THEM**. The propagated terms have **NO** overlap with the original
+terms (see 0's at the start of the graph), and are children of the original terms. 
+Just to be sure, I will also compare the propagated terms to the `GOALL` annotation,
+which would be all of the GO terms that can **technically** be considered as
+**annotated** to the gene (see *true path rule* from the Introduction), 
 in that all **terms** and their **parent** terms are **annotated** to a gene product.
 
 
@@ -341,7 +361,7 @@ sum(hs_a2m_all$GOALL %in% onmf_a2m_matrix_prop) # propogated annotation
 ```
 
 From this, none of the **propogated** terms can be properly considered as 
-annotations to **A2M**. Effectively, the code has generated a new set of
+annotations to **A2M**. Effectively, the code has generated a **new set** of
 GO annotations to **A2M**. I am sure this is the situation for all of the
 genes.
 
