@@ -191,7 +191,7 @@ onmf_a2m_start <- dplyr::filter(gene2go, geneid == "A2M") %>%
 
 onmf_a2m_indices_org <- scan(file = "ONMF_source/brca/org_notzero", what = numeric(),
                          sep = " ")
-onmf_a2m_indices_org <- onmf_a2m_indices[!is.na(onmf_a2m_indices_org)]
+onmf_a2m_indices_org <- onmf_a2m_indices_org[!is.na(onmf_a2m_indices_org)]
 onmf_a2m_matrix_org <- dplyr::filter(go_map, loc %in% onmf_a2m_indices_org) %>%
   dplyr::select(GO) %>% unlist(., use.names = FALSE) %>% sort()
 

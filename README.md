@@ -1,7 +1,7 @@
 ---
 title: "RMF Investigation of GO-ONMF"
 author: "Robert M Flight <rflight79@gmail.com>"
-date: "2015-11-30 22:34:54"
+date: "2015-11-30 22:50:00"
 output: md_document
 ---
 
@@ -228,14 +228,7 @@ onmf_a2m_start <- dplyr::filter(gene2go, geneid == "A2M") %>%
 
 onmf_a2m_indices_org <- scan(file = "ONMF_source/brca/org_notzero", what = numeric(),
                          sep = " ")
-onmf_a2m_indices_org <- onmf_a2m_indices[!is.na(onmf_a2m_indices_org)]
-```
-
-```
-## Error in eval(expr, envir, enclos): object 'onmf_a2m_indices' not found
-```
-
-```r
+onmf_a2m_indices_org <- onmf_a2m_indices_org[!is.na(onmf_a2m_indices_org)]
 onmf_a2m_matrix_org <- dplyr::filter(go_map, loc %in% onmf_a2m_indices_org) %>%
   dplyr::select(GO) %>% unlist(., use.names = FALSE) %>% sort()
 
