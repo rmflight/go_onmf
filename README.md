@@ -1,7 +1,7 @@
 ---
 title: "RMF Investigation of GO-ONMF"
 author: "Robert M Flight <rflight79@gmail.com>"
-date: "2015-11-30 21:20:26"
+date: "2015-11-30 22:09:26"
 output: md_document
 ---
 
@@ -214,7 +214,7 @@ hist(go2go_overlap)
 
 ![plot of chunk plot_go2go_comparison](figure/plot_go2go_comparison-1.png) 
 
-## Work With Single Gene
+## Work With Single Gene (A2M)
 
 Now lets work with a single gene, and see what is going on. We'll keep it simple
 and play with the first one in the list, *A2M*.
@@ -244,77 +244,47 @@ onmf_a2m_matrix_prop <- dplyr::filter(go_map, loc %in% onmf_a2m_indices_prop) %>
   dplyr::select(GO) %>% unlist(., use.names = FALSE) %>% sort()
 ```
 
-
-Now, are the terms in `org_go` parents of the terms in `prop_go`? We will simply
-make a calls to `GOBPANCESTORS` and save the results.
+Now, how many of the terms in the starting gene annotation actually in the database
+annotation?
 
 
 ```r
-# first check that everything is BP
-org_terms <- GOTERM[org_go]
+hs_a2m_go <- dplyr::filter(hs_gene2go, SYMBOL == "A2M") %>%
+  dplyr::select(GO) %>% unlist(., use.names = FALSE) %>% unique()
+sum(onmf_a2m_matrix_org %in% hs_a2m_go) / length(onmf_a2m_matrix_org)
 ```
 
 ```
-## Error in GOTERM[org_go]: object 'org_go' not found
+## [1] 0.8
 ```
+
+OK, seems we have most of them. Good.
+
+Next, are the propogated terms actually children of the starting terms? We will
+use multiple iterations of calls to `GOBPCHILDREN` and see if we get progressively
+more of the terms.
+
 
 ```r
-unique(Ontology(org_terms))
+n_iteration <- 10
+query_list <- onmf_a2m_matrix_org
+children_overlap <- numeric(n_iteration + 1)
+
+for (i_iter in seq(1, n_iteration)) {
+  children_overlap[i_iter + 1] <- 
+    sum(onmf_a2m_matrix_prop %in% query_list) / length(onmf_a2m_indices_prop)
+  
+  query_child <- mget(query_list, GOBPCHILDREN, ifnotfound = NA) %>% 
+    unlist(., use.names = FALSE) %>% unique()
+  query_child <- query_child[!is.na(query_child)]
+  query_list <- unique(c(query_list, 
+                       query_child))
+}
 ```
 
-```
-## Error in unique(Ontology(org_terms)): error in evaluating the argument 'x' in selecting a method for function 'unique': Error in Ontology(org_terms) : 
-##   error in evaluating the argument 'object' in selecting a method for function 'Ontology': Error: object 'org_terms' not found
-```
 
 ```r
-prop_terms <- GOTERM[prop_go]
+plot(seq(0, n_iteration), children_overlap)
 ```
 
-```
-## Error in GOTERM[prop_go]: object 'prop_go' not found
-```
-
-```r
-unique(Ontology(prop_terms))
-```
-
-```
-## Error in unique(Ontology(prop_terms)): error in evaluating the argument 'x' in selecting a method for function 'unique': Error in Ontology(prop_terms) : 
-##   error in evaluating the argument 'object' in selecting a method for function 'Ontology': Error: object 'prop_terms' not found
-```
-
-```r
-# get ancestors
-prop_ancestors <- mget(prop_go, GOBPANCESTOR, ifnotfound = NA) %>% 
-  unlist(., use.names = FALSE) %>% unique()
-```
-
-```
-## Error in mget(prop_go, GOBPANCESTOR, ifnotfound = NA): error in evaluating the argument 'x' in selecting a method for function 'mget': Error: object 'prop_go' not found
-```
-
-```r
-sum(org_go %in% prop_ancestors)
-```
-
-```
-## Error in org_go %in% prop_ancestors: error in evaluating the argument 'x' in selecting a method for function '%in%': Error: object 'org_go' not found
-```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+![plot of chunk plot_it](figure/plot_it-1.png) 

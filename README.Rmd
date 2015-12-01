@@ -178,7 +178,7 @@ And plot it:
 hist(go2go_overlap)
 ```
 
-## Work With Single Gene
+## Work With Single Gene (A2M)
 
 Now lets work with a single gene, and see what is going on. We'll keep it simple
 and play with the first one in the list, *A2M*.
@@ -200,96 +200,38 @@ onmf_a2m_matrix_prop <- dplyr::filter(go_map, loc %in% onmf_a2m_indices_prop) %>
   dplyr::select(GO) %>% unlist(., use.names = FALSE) %>% sort()
 ```
 
+Now, how many of the terms in the starting gene annotation actually in the database
+annotation?
 
-Now, are the terms in `org_go` parents of the terms in `prop_go`? We will simply
-make a calls to `GOBPANCESTORS` and save the results.
-
-```{r get_ancestors}
-# first check that everything is BP
-org_terms <- GOTERM[org_go]
-unique(Ontology(org_terms))
-
-prop_terms <- GOTERM[prop_go]
-unique(Ontology(prop_terms))
-
-# get ancestors
-prop_ancestors <- mget(prop_go, GOBPANCESTOR, ifnotfound = NA) %>% 
-  unlist(., use.names = FALSE) %>% unique()
-
-sum(org_go %in% prop_ancestors)
+```{r check_start_annotation}
+hs_a2m_go <- dplyr::filter(hs_gene2go, SYMBOL == "A2M") %>%
+  dplyr::select(GO) %>% unlist(., use.names = FALSE) %>% unique()
+sum(onmf_a2m_matrix_org %in% hs_a2m_go) / length(onmf_a2m_matrix_org)
 ```
 
-Hmmm, there are `r sum(org_go %in% prop_ancestors)` of the originals in the
-propagated. This seems not right. Maybe they are children instead?
+OK, seems we have most of them. Good.
+
+Next, are the propogated terms actually children of the starting terms? We will
+use multiple iterations of calls to `GOBPCHILDREN` and see if we get progressively
+more of the terms.
 
 ```{r get_children}
-org_ancestors <- mget(org_go, GOBPANCESTOR, ifnotfound = NA) %>%
-  unlist(., use.names = FALSE) %>% unique()
+n_iteration <- 10
+query_list <- onmf_a2m_matrix_org
+children_overlap <- numeric(n_iteration + 1)
 
-sum(prop_go %in% org_ancestors)
-```
-
-OK, this doesn't look right either. 
-
-## Check GO Relationships
-
-There is a file that has the distances between GO terms, encoded as:
-
-* GO term 1 | distance | GO term 2
-
-For adjacent terms, it appears that the distance is 0.5. So lets extract all
-of them, and compare them to the data in `GO.db`.
-
-```{r load_go2go}
-go2go <- read_csv("ONMF_source/brca/network_allgo2allgo(merged).csv",
-                  col_names = c("GO1", "distance", "GO2"))
-
-
-```
-
-```{r split_parent_child}
-
-```
-
-```{r go_relationships}
-go_child <- mget(names(onmf_parent_child), GOBPCHILDREN, ifnotfound = NA)
-```
-
-And calculate the % overlap of the `go_child` to `onmf_parent_child`.
-
-```{r perc_overlap_onmf_go}
-perc_overlap <- vapply(names(onmf_parent_child), function(x){
-  onmf_data <- unique(onmf_parent_child[[x]])
-  go_data <- unique(go_child[[x]])
+for (i_iter in seq(1, n_iteration)) {
+  children_overlap[i_iter + 1] <- 
+    sum(onmf_a2m_matrix_prop %in% query_list) / length(onmf_a2m_indices_prop)
   
-  sum(go_data %in% onmf_data) / length(go_data)
-}, numeric(1))
+  query_child <- mget(query_list, GOBPCHILDREN, ifnotfound = NA) %>% 
+    unlist(., use.names = FALSE) %>% unique()
+  query_child <- query_child[!is.na(query_child)]
+  query_list <- unique(c(query_list, 
+                       query_child))
+}
 ```
 
-```{r plot_perc}
-hist(perc_overlap)
+```{r plot_it}
+plot(seq(0, n_iteration), children_overlap)
 ```
-
-Some differences, but doesn't seem completely unexpected given that the data I'm
-using is newer than the data they used.
-
-## Check the GO Annotations
-
-With this gene id, we can lookup the GO annotations for the gene stored in
-`org.Hs.eg.db`.
-
-```{r get_go}
-gene_go <- AnnotationDbi::select(org.Hs.eg.db, keys = gene_id, columns = "GO",
-                                 keytype = "SYMBOL")
-gene_go <- dplyr::filter(gene_go, ONTOLOGY == "BP", EVIDENCE != "IEA")
-gene_allgo <- AnnotationDbi::select(org.Hs.eg.db, keys = gene_id, columns = "GOALL",
-                                    keytype = "SYMBOL")
-gene_allgo <- dplyr::filter(gene_allgo, ONTOLOGYALL == "BP", EVIDENCEALL != "IEA")
-```
-
-And lookup how many of the ONMF GO terms are in these two lists.
-
-```{r compare_onmf_to_official}
-sum(org_go %in% gene_go$GO) 
-```
-
