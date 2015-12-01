@@ -83,7 +83,7 @@ cd brca
 run exp_onmf_brca_mod.m
 ```
 
-As this runs, it generates *gene2go.mat*, which is the propogated scores of gene
+As this runs, it generates *gene2go.mat*, which is the propagated scores of gene
 to GO associations, and then saves indices (see [file](ONMF_source/brca/exp_onmf_brca_mod.m)):
 
 ```{r print_octave_code, echo = FALSE, comment=''}
@@ -155,7 +155,10 @@ hs_gene2go <- select(org.Hs.eg.db, keys = unique(gene2go$geneid),
 hs_gene2go <- dplyr::filter(hs_gene2go, ONTOLOGY == "BP", EVIDENCE != "IEA")
 ```
 
-And compare the annotations for the genes between them.
+### Compare Gene-GO Annotations
+
+And compare the annotations for the genes between the data from Kim and from
+the Bioconductor database.
 
 ```{r compare_annotation_sources}
 annotation_overlap <- vapply(unique(hs_gene2go$SYMBOL), function(in_loc){
@@ -174,6 +177,8 @@ hist(annotation_overlap)
 ```
 
 That is great, over 4000 of the genes have what appear to be very similar terms!
+
+### Compare GO-GO Relationships
 
 Lets also check the **GO2GO** data.
 
@@ -203,6 +208,8 @@ hist(go2go_overlap)
 Now lets work with a single gene, and see what is going on. We'll keep it simple
 and play with the first one in the list, *A2M*.
 
+### Grab Starting and Propogated
+
 ```{r a2m_data}
 onmf_a2m_start <- dplyr::filter(gene2go, geneid == "A2M") %>%
   dplyr::select(goid) %>% unlist(., use.names = FALSE) %>% sort()
@@ -231,7 +238,7 @@ sum(onmf_a2m_matrix_org %in% hs_a2m_go) / length(onmf_a2m_matrix_org)
 
 OK, seems we have most of them. Good.
 
-Next, are the propogated terms actually children of the starting terms? We will
+Next, are the propagated terms actually children of the starting terms? We will
 use multiple iterations of calls to `GOBPCHILDREN` and see if we get progressively
 more of the terms.
 
@@ -256,9 +263,9 @@ for (i_iter in seq(1, n_iteration)) {
 plot(seq(0, n_iteration), children_overlap)
 ```
 
-**WE HAVE FOUND THEM**. The propogated terms have **NO** overlap with the original
+**WE HAVE FOUND THEM**. The propagated terms have **NO** overlap with the original
 terms, and are children of the original terms. Just to be sure, we will also
-compare the propogated terms to the `GOALL` annotation, which would be all of
+compare the propagated terms to the `GOALL` annotation, which would be all of
 the GO terms that can **technically** be considered as **annotated** to the gene
 in that all **terms** and their **parent** terms are **annotated** to a gene product.
 
