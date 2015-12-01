@@ -1,7 +1,7 @@
 ---
 title: "RMF Investigation of GO-ONMF"
 author: "Robert M Flight <rflight79@gmail.com>"
-date: "2015-11-30 22:23:27"
+date: "2015-11-30 22:34:54"
 output: md_document
 ---
 
@@ -290,3 +290,59 @@ plot(seq(0, n_iteration), children_overlap)
 ```
 
 ![plot of chunk plot_it](figure/plot_it-1.png) 
+
+**WE HAVE FOUND THEM**. The propogated terms have **NO** overlap with the original
+terms, and are children of the original terms. Just to be sure, we will also
+compare the propogated terms to the `GOALL` annotation, which would be all of
+the GO terms that can **technically** be considered as **annotated** to the gene
+in that all **terms** and their **parent** terms are **annotated** to a gene product.
+
+
+```r
+hs_a2m_all <- select(org.Hs.eg.db, keys = "A2M", columns = "GOALL", 
+                     keytype = "SYMBOL")
+```
+
+```
+## 'select()' returned 1:many mapping between keys and columns
+```
+
+```r
+head(hs_a2m_all)
+```
+
+```
+##   SYMBOL      GOALL EVIDENCEALL ONTOLOGYALL
+## 1    A2M GO:0001775         TAS          BP
+## 2    A2M GO:0001867         IDA          BP
+## 3    A2M GO:0001868         IDA          BP
+## 4    A2M GO:0001869         IDA          BP
+## 5    A2M GO:0002020         IPI          MF
+## 6    A2M GO:0002252         IDA          BP
+```
+
+```r
+sum(hs_a2m_all$GOALL %in% onmf_a2m_matrix_org) # the starting annotation
+```
+
+```
+## [1] 12
+```
+
+```r
+sum(hs_a2m_all$GOALL %in% onmf_a2m_matrix_prop) # propogated annotation
+```
+
+```
+## [1] 0
+```
+
+From this, none of the **propogated** terms can be properly considered as 
+annotations to **A2M**. Effectively, the code has generated a new set of
+GO annotations to **A2M**. I am sure this is the situation for all of the
+genes.
+
+# Possible Solution
+
+I wonder if a GOSlim would have fixed the problem of redundancy without introducing
+these new annotation relationships?

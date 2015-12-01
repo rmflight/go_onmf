@@ -237,3 +237,27 @@ for (i_iter in seq(1, n_iteration)) {
 ```{r plot_it}
 plot(seq(0, n_iteration), children_overlap)
 ```
+
+**WE HAVE FOUND THEM**. The propogated terms have **NO** overlap with the original
+terms, and are children of the original terms. Just to be sure, we will also
+compare the propogated terms to the `GOALL` annotation, which would be all of
+the GO terms that can **technically** be considered as **annotated** to the gene
+in that all **terms** and their **parent** terms are **annotated** to a gene product.
+
+```{r get_all}
+hs_a2m_all <- select(org.Hs.eg.db, keys = "A2M", columns = "GOALL", 
+                     keytype = "SYMBOL")
+head(hs_a2m_all)
+sum(hs_a2m_all$GOALL %in% onmf_a2m_matrix_org) # the starting annotation
+sum(hs_a2m_all$GOALL %in% onmf_a2m_matrix_prop) # propogated annotation
+```
+
+From this, none of the **propogated** terms can be properly considered as 
+annotations to **A2M**. Effectively, the code has generated a new set of
+GO annotations to **A2M**. I am sure this is the situation for all of the
+genes.
+
+# Possible Solution
+
+I wonder if a GOSlim would have fixed the problem of redundancy without introducing
+these new annotation relationships?
