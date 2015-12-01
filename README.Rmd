@@ -38,6 +38,14 @@ annotated to all of the *less-specific* **parent** terms in the DAG.
 What the procedure quoted above sounds like it is doing is essentially **adding**
 **more specific** GO annotations to a gene product, which as far as I know is not allowed.
 
+From [The Gene Ontology Consortium, 2001](http://www.ncbi.nlm.nih.gov/pmc/articles/PMC311077/):
+
+> The pathway from a child term to its top-level parent(s) must always be true.
+
+This is why when considering gene-GO annotations, we consider the specific term
+annotation, and **all** parent terms as well, because of the **true path** rule.
+However, the converse is not true.
+
 This document is a record of my investigation as to whether **more specific** GO
 annotations are being added to gene products during the creation of the mutation 
 profiles.
@@ -139,7 +147,7 @@ gene2go$goid <- unlist(go_map[match(gene2go$GO, go_map$loc), "GO"],
                        use.names = FALSE)
 ```
 
-And then query `org.Hs.eg.db` for the annotations as well.
+And then query `org.Hs.eg.db` for the gene-annotations as well.
 
 ```{r gene_annotation_from_source}
 hs_gene2go <- select(org.Hs.eg.db, keys = unique(gene2go$geneid),
