@@ -102,12 +102,20 @@ library(org.Hs.eg.db)
 Lets check that the actual data being used as input looks right.
 
 ```{r load_annotation}
-go_map <- read_csv("ONMF_source/brca/go_(merged).csv", col_names = c("loc", "GO"))
-gene_map <- read_csv("ONMF_source/brca/gene_(merged).csv", col_names = c("loc", "GENE"))
+go_map <- read_csv("ONMF_source/brca/go_(merged).csv", 
+                   col_names = c("loc", "GO"))
+go_map$loc <- go_map$loc + 1
+gene_map <- read_csv("ONMF_source/brca/gene_(merged).csv", 
+                     col_names = c("loc", "GENE"))
+gene_map$loc <- gene_map$loc + 1
 gene2go <- read_csv("ONMF_source/brca/network_gene2go(merged).csv",
                     col_names = c("gene", "score", "GO"))
+gene2go$gene <- gene2go$gene + 1
+gene2go$GO <- gene2go$GO + 1
 go2go <- read_csv("ONMF_source/brca/network_allgo2allgo(merged).csv",
                   col_names = c("GO1", "distance", "GO2"))
+go2go$GO1 <- go2go$GO1 + 1
+go2go$GO2 <- go2go$GO2 + 1
 ```
 
 And translate to something we can actually use.
@@ -170,14 +178,12 @@ And plot it:
 hist(go2go_overlap)
 ```
 
-
-
 ## Work With Single Gene
 
 Now lets work with a single gene, and see what is going on. We'll keep it simple
 and play with the first one in the list, *A2M*.
 
-```{r}
+```{r a2m_data}
 
 ```
 

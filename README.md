@@ -1,7 +1,7 @@
 ---
 title: "RMF Investigation of GO-ONMF"
 author: "Robert M Flight <rflight79@gmail.com>"
-date: "2015-11-30 15:51:30"
+date: "2015-11-30 20:55:13"
 output: md_document
 ---
 
@@ -88,11 +88,11 @@ gene2go = getSparse(gene2go);
 go2go = getSparse(go2go);
 patient2gene(find(patient2gene)) = 1;
 gene2go(find(gene2go)) = 1;
-org_notzero = find(gene2go(783, :));
+org_notzero = find(gene2go(1, :));
 save -ascii org_notzero org_notzero;
 [baseSMData, patient2gene, gene2go_new, go2go_new] = TuneData(patient2gene, gene2go, go2go);
 isequal(go2go_new, go2go)
-prop_notzero = find(gene2go_new(783, :));
+prop_notzero = find(gene2go_new(1, :));
 save -ascii prop_notzero prop_notzero;
 ```
 
@@ -121,12 +121,20 @@ Lets check that the actual data being used as input looks right.
 
 
 ```r
-go_map <- read_csv("ONMF_source/brca/go_(merged).csv", col_names = c("loc", "GO"))
-gene_map <- read_csv("ONMF_source/brca/gene_(merged).csv", col_names = c("loc", "GENE"))
+go_map <- read_csv("ONMF_source/brca/go_(merged).csv", 
+                   col_names = c("loc", "GO"))
+go_map$loc <- go_map$loc + 1
+gene_map <- read_csv("ONMF_source/brca/gene_(merged).csv", 
+                     col_names = c("loc", "GENE"))
+gene_map$loc <- gene_map$loc + 1
 gene2go <- read_csv("ONMF_source/brca/network_gene2go(merged).csv",
                     col_names = c("gene", "score", "GO"))
+gene2go$gene <- gene2go$gene + 1
+gene2go$GO <- gene2go$GO + 1
 go2go <- read_csv("ONMF_source/brca/network_allgo2allgo(merged).csv",
                   col_names = c("GO1", "distance", "GO2"))
+go2go$GO1 <- go2go$GO1 + 1
+go2go$GO2 <- go2go$GO2 + 1
 ```
 
 And translate to something we can actually use.
@@ -206,8 +214,6 @@ hist(go2go_overlap)
 
 ![plot of chunk plot_go2go_comparison](figure/plot_go2go_comparison-1.png) 
 
-
-
 ## Work With Single Gene
 
 Now lets work with a single gene, and see what is going on. We'll keep it simple
@@ -255,7 +261,7 @@ gene_id <- dplyr::filter(gene_map, loc %in% 783) %>% dplyr::select(GENE) %>%
   unlist(., use.names = FALSE)
 ```
 
-The gene name is CYP1B1.
+The gene name is CYP1A2.
 
 Now, are the terms in `org_go` parents of the terms in `prop_go`? We will simply
 make a calls to `GOBPANCESTORS` and save the results.
@@ -273,11 +279,19 @@ unique(Ontology(org_terms))
 
 ```r
 prop_terms <- GOTERM[prop_go]
+```
+
+```
+## Error in .checkKeys(value, Lkeys(x), x@ifnotfound): value for "GO:0034259" not found
+```
+
+```r
 unique(Ontology(prop_terms))
 ```
 
 ```
-## [1] "BP"
+## Error in unique(Ontology(prop_terms)): error in evaluating the argument 'x' in selecting a method for function 'unique': Error in Ontology(prop_terms) : 
+##   error in evaluating the argument 'object' in selecting a method for function 'Ontology': Error: object 'prop_terms' not found
 ```
 
 ```r
@@ -304,7 +318,7 @@ sum(prop_go %in% org_ancestors)
 ```
 
 ```
-## [1] 3
+## [1] 0
 ```
 
 OK, this doesn't look right either. 
@@ -400,6 +414,6 @@ sum(org_go %in% gene_go$GO)
 ```
 
 ```
-## [1] 1
+## [1] 0
 ```
 
