@@ -1,7 +1,7 @@
 ---
 title: "RMF Investigation of GO-ONMF"
 author: "Robert M Flight <rflight79@gmail.com>"
-date: "2015-11-30 22:16:43"
+date: "2015-11-30 22:20:45"
 output: md_document
 ---
 
@@ -38,7 +38,7 @@ profiles.
 
 ## Software
 
-Kim and Yu made an Octave version of their software available at https://sites.google.com/site/postechdm/research/implementation/orgos, and a
+Kim and Yu made an `Octave` version of their software available at https://sites.google.com/site/postechdm/research/implementation/orgos, and a
 tarball of the Octave version can be downloaded from https://sites.google.com/site/postechdm/research/implementation/orgos/ONMF_octave-simple.zip
 
 ```
@@ -52,12 +52,12 @@ are important for our purposes include:
 
 * ONMF_source/brca/go_(merged).csv - the index to GO term file
 * ONMF_source/brca/gene_(merged).csv - the index to gene file
-* exp_onmf_brca.m - the file that runs the *brca* analysis
+* exp_onmf_brca_mod.m - the file that runs the *brca* analysis
 * network_gene2go(merged).csv - the gene 2 GO annotations
 
 ## Running Code
 
-After modifying *exp_onmf_brca.m* with:
+After modifying *exp_onmf_brca_mod.m* with:
 
 > library_path = '/home/rmflight/Projects/personal/onmf/ONMF_source/ONMF_octave';
 
@@ -72,7 +72,7 @@ As this runs, it generates *gene2go.mat*, which is the propogated scores of gene
 to GO associations.
 
 I will use `Octave` to generate some indices and print them to files that can be
-double checked in `R` (see ONMF_source/brca/exp_onmf_brca.m)
+double checked in `R` (see [file](ONMF_source/brca/exp_onmf_brca.m))
 
 
 ```
