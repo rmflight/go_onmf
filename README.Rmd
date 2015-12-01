@@ -30,10 +30,10 @@ is annotated to a *specific* term, then that gene product is also automatically
 annotated to all of the *less-specific* **parent** terms in the DAG. 
 
 What the procedure quoted above sounds like it is doing is essentially **adding**
-more specific gene product to GO annotations, which as far as I know is not allowed.
+more specific GO annotations to a gene product, which as far as I know is not allowed.
 
-This document is a record of my investigation as to whether *more specific* gene
-product - GO annotations are generated during the creation of the mutation 
+This document is a record of my investigation as to whether *more specific* GO
+annotations are being added to gene products during the creation of the mutation 
 profiles.
 
 ## Software
@@ -71,7 +71,7 @@ run exp_onmf_brca.m
 As this runs, it generates *gene2go.mat*, which is the propogated scores of gene
 to GO associations.
 
-We will use `Octave` to generate some indices and print them to files that can be
+I will use `Octave` to generate some indices and print them to files that can be
 double checked in `R` (see ONMF_source/brca/exp_onmf_brca.m)
 
 ```{r print_octave_code, echo = FALSE, comment=''}
@@ -99,7 +99,9 @@ library(org.Hs.eg.db)
 
 ## Check Actual Input Data
 
-Lets check that the actual data being used as input looks right.
+Lets check that the actual data being used as input looks right. **Note** that 
+1 gets added to the map indices so that we easily work with the data from the
+matrices in `Octave`.
 
 ```{r load_annotation}
 go_map <- read_csv("ONMF_source/brca/go_(merged).csv", 
