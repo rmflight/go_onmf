@@ -1,7 +1,7 @@
 ---
 title: "RMF Investigation of GO-ONMF"
 author: "Robert M Flight <rflight79@gmail.com>"
-date: "2015-11-30 22:20:45"
+date: "2015-11-30 22:23:27"
 output: md_document
 ---
 
@@ -72,7 +72,7 @@ As this runs, it generates *gene2go.mat*, which is the propogated scores of gene
 to GO associations.
 
 I will use `Octave` to generate some indices and print them to files that can be
-double checked in `R` (see [file](ONMF_source/brca/exp_onmf_brca.m))
+double checked in `R` (see [file](ONMF_source/brca/exp_onmf_brca_mod.m))
 
 
 ```
