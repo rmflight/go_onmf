@@ -1,7 +1,7 @@
 ---
 title: "RMF Investigation of GO-ONMF"
 author: "Robert M Flight <rflight79@gmail.com>"
-date: "2015-12-03 10:35:54"
+date: "2015-12-03 10:54:46"
 output: md_document
 ---
 
@@ -394,7 +394,7 @@ children_down[[1]] <- hs_a2m_go
 for (i_iter in seq(2, 11)) {
   tmp_down <- mget(children_down[[i_iter - 1]], GOBPCHILDREN, ifnotfound = NA)
   na_entries <- sapply(tmp_down, function(x){sum(is.na(x)) == 1})
-  all_children <- c(unlist(tmp_down, use.names = FALSE), names(na_entries)[na_entries])
+  all_children <- unique(c(unlist(tmp_down, use.names = FALSE), names(na_entries)[na_entries]))
   children_down[[i_iter]] <- all_children[!is.na(all_children)]
 }
 
@@ -403,7 +403,7 @@ len_children
 ```
 
 ```
-##  [1]  10  52 144 275 341 347 347 347 347 347 347
+##  [1]  10  50 100  95  74  69  69  69  69  69  69
 ```
 
 From this, it looks like all of the children are captured by step *5* of the
@@ -417,7 +417,7 @@ parents_up[[1]] <- children_down[[6]]
 for (i_iter in seq(2, 6)) {
   tmp_up <- mget(parents_up[[i_iter - 1]], GOBPPARENTS, ifnotfound = NA)
   na_entries <- vapply(tmp_up, function(x){sum(is.na(x)) == 1}, logical(1))
-  all_parents <- c(unlist(tmp_up, use.names = FALSE), names(na_entries)[na_entries])
+  all_parents <- unique(c(unlist(tmp_up, use.names = FALSE), names(na_entries)[na_entries]))
   parents_up[[i_iter]] <- all_parents[!is.na(all_parents)]
 }
 len_parents <- vapply(parents_up, length, numeric(1))
@@ -425,7 +425,7 @@ len_parents
 ```
 
 ```
-## [1]   347  1100  2954  7357 16335 30379
+## [1]  69 115 172 228 248 221
 ```
 
 As I suspected, going from the propagated children back up to parents (even a 
