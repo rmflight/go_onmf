@@ -287,6 +287,24 @@ annotations to **A2M**. Effectively, the code has generated a **new set** of
 GO annotations to **A2M**. I am sure this is the situation for all of the
 genes.
 
+## Back to Parent
+
+On Dec 3, Sael replied to my email (see [correspondence](correspondence/sael_from_2015-12-03.md)),
+and the crux of his response amounts to propagating back up to parents to get
+significant / interpretable GO terms (also in the supplemental materials, I have
+added a [PDF of the supplementary materials](supp_data/SUPPLEMENTARY_DATA.pdf). 
+This seems rather odd to end up doing two sets of propagation, one down to leaf
+terms to make the ONMF better (I assume), and then another up to parent terms 
+to get more interpretable / significant results.
+
+I am also concerned that propagating back up will actually result in more terms
+than were originally annotated to a gene of interest. This is possible because
+of the DAG nature of the GO and multi-parent / multi-child relationships.
+
+Lets actually check if a round of propagating down to children and then back up
+to parents results in the same or different set of parent terms than was started 
+with. I will use the same set of terms that were annotated to *A2M* above.
+
 # Possible Solution
 
 I wonder if a GOSlim would have fixed the problem of redundancy without introducing
