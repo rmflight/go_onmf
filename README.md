@@ -1,7 +1,7 @@
 ---
 title: "RMF Investigation of GO-ONMF"
 author: "Robert M Flight <rflight79@gmail.com>"
-date: "2015-12-01 16:10:52"
+date: "2015-12-03 10:35:54"
 output: md_document
 ---
 
@@ -365,7 +365,90 @@ annotations to **A2M**. Effectively, the code has generated a **new set** of
 GO annotations to **A2M**. I am sure this is the situation for all of the
 genes.
 
-# Possible Solution
+## Back to Parent
 
-I wonder if a GOSlim would have fixed the problem of redundancy without introducing
-these new annotation relationships?
+On Dec 3, Sael replied to my email (see [correspondence](correspondence/sael_from_2015-12-03.md)),
+and the crux of his response amounts to propagating back up to parents to get
+significant / interpretable GO terms (also in the supplemental materials, I have
+added a [PDF of the supplementary materials](supp_data/SUPPLEMENTARY_DATA.pdf). 
+This seems rather odd to end up doing two sets of propagation, one down to leaf
+terms to make the ONMF better (I assume), and then another up to parent terms 
+to get more interpretable / significant results.
+
+I am also concerned that propagating back up will actually result in more terms
+than were originally annotated to a gene of interest. This is possible because
+of the DAG nature of the GO and multi-parent / multi-child relationships.
+
+Lets actually check if a round of propagating down to children and then back up
+to parents results in the same or different set of parent terms than was started 
+with. I will use the same set of terms that were annotated to *A2M* above.
+
+I am going to use a set number of iterations of propagation (10) both down and
+up to demonstrate the possible problem.
+
+
+```r
+children_down <- list(11)
+children_down[[1]] <- hs_a2m_go
+
+for (i_iter in seq(2, 11)) {
+  tmp_down <- mget(children_down[[i_iter - 1]], GOBPCHILDREN, ifnotfound = NA)
+  na_entries <- sapply(tmp_down, function(x){sum(is.na(x)) == 1})
+  all_children <- c(unlist(tmp_down, use.names = FALSE), names(na_entries)[na_entries])
+  children_down[[i_iter]] <- all_children[!is.na(all_children)]
+}
+
+len_children <- vapply(children_down, length, numeric(1))
+len_children
+```
+
+```
+##  [1]  10  52 144 275 341 347 347 347 347 347 347
+```
+
+From this, it looks like all of the children are captured by step *5* of the
+propagation. So it will be 5 steps of propagation back up to parents.
+
+
+```r
+parents_up <- list(6)
+parents_up[[1]] <- children_down[[6]]
+
+for (i_iter in seq(2, 6)) {
+  tmp_up <- mget(parents_up[[i_iter - 1]], GOBPPARENTS, ifnotfound = NA)
+  na_entries <- vapply(tmp_up, function(x){sum(is.na(x)) == 1}, logical(1))
+  all_parents <- c(unlist(tmp_up, use.names = FALSE), names(na_entries)[na_entries])
+  parents_up[[i_iter]] <- all_parents[!is.na(all_parents)]
+}
+len_parents <- vapply(parents_up, length, numeric(1))
+len_parents
+```
+
+```
+## [1]   347  1100  2954  7357 16335 30379
+```
+
+As I suspected, going from the propagated children back up to parents (even a 
+limited number of iterations) results in a huge number of terms, many more than
+was in the initial list. Granted, this did not seem to happen to such a degree
+in the manuscript, because they were able to get significant enrichment of
+parent terms, so only a limited subset had to have been returned by the iterative
+matrix multiplication. 
+
+# Concluding Thoughts
+
+However, there is nothing in the manuscript that demonstrates that the initial
+propagation to child terms is necessary for performance of the method, or that
+using a GOSlim does not work, or that the same / similar parent terms are returned
+by propagating back up. I am surprised that the reviewers did not ask for any
+of these things given the nature of the data.
+
+I would also like to commend the authors for making the implementation available
+in an open-source language (`Octave`), and for replying to my email questioning
+the methodology. More of the published methodologies need to provide at least
+a reference implementation in an open-source programming language.
+
+# Commenting
+
+I have left a comment on the [Pubmed Commons Page](http://www.ncbi.nlm.nih.gov/pubmed/26209432) for this manuscript pointing
+to this analysis.
