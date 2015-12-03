@@ -354,3 +354,13 @@ propagation to child terms is necessary for performance of the method, or that
 using a GOSlim does not work, or that the same / similar parent terms are returned
 by propagating back up. I am surprised that the reviewers did not ask for any
 of these things given the nature of the data.
+
+I would also like to commend the authors for making the implementation available
+in an open-source language (`Octave`), and for replying to my email questioning
+the methodology. More of the published methodologies need to provide at least
+a reference implementation in an open-source programming language.
+
+# Commenting
+
+I have left a comment on the [Pubmed Commons Page](http://www.ncbi.nlm.nih.gov/pubmed/26209432) for this manuscript pointing
+to this analysis.
